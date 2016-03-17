@@ -11,8 +11,7 @@ public: // data
     float x,y,z;
 
 public: // constructor
-    Vec3() = default;
-    Vec3(float x, float y, float z): x(x),y(y),z(z) {}
+    Vec3(float x=0, float y=0, float z=0): x(x),y(y),z(z) {}
     Vec3(std::initializer_list<float> data);
 
 public: // operators
@@ -25,8 +24,9 @@ public: // operators
     float& operator[](int i) { return (&x)[i]; }
 
 public: // operations
-    friend float dot(Vec3 u, Vec3 v) { return u.x*v.x + u.y+v.y + u.z*v.z; }
-    friend Vec3 cross(Vec3 u, Vec3 v) { return Vec3(u.y*v.z-u.z-v.y, u.z*v.x-u.x*v.z, u.x*v.y-u.y*v.x); }
+    friend float dot(Vec3 u, Vec3 v) { return u.x*v.x + u.y*v.y + u.z*v.z; }
+    friend Vec3 cross(Vec3 u, Vec3 v) { return
+        Vec3(u.y*v.z - u.z*v.y, u.z*v.x - u.x*v.z, u.x*v.y - u.y*v.x); }
     float norm() const { return x*x + y*y + z*z; }
     float mag() const { return sqrt(norm()); }
     Vec3 normalize() const { return (*this)/mag(); }

@@ -17,7 +17,6 @@ void Scene::load(string filename)
 
     string line, keyword;
     while (getline(objfile, line)) {
-        if (line.size() < 8) continue;
         istringstream linestream(line);
         linestream >> keyword;
 
@@ -41,10 +40,11 @@ void Scene::load(string filename)
 
         else if (keyword == "f") {
             Vec3 v[3];
+
             // determine type (v / v+n / v+t+n )
             if (line.find("/") == string::npos) { // v only
                 for (int i = 0; i < 3; i++) {
-                    linestream >> v[i].x;
+                    linestream >> v[i].x; v[i].y = v[i].z = 0;
                     faces.push_back(v[i]);
                 }
             }
@@ -52,7 +52,7 @@ void Scene::load(string filename)
             else if (line.find("//") != string::npos) { // v+n
                 for (int i = 0; i < 3; i++) {
                     linestream >> v[i].x;
-                    linestream.get(); linestream.get(); // eat up the "//" string
+                    linestream.get(); linestream.get(); v[i].y = 0; // eat up the "//" string
                     linestream >> v[i].z;
                     faces.push_back(v[i]);
                 }
@@ -69,6 +69,7 @@ void Scene::load(string filename)
         }
     }
 
+    // don't forget to close the file
     objfile.close();
 }
 
@@ -90,7 +91,7 @@ void Scene::print() const
     }
 
     // print faces
-    for (int i = 0; i < faces.size(); i += 3) {
+    for (unsigned long i = 0; i < faces.size(); i += 3) {
         cout << "f ";
         cout << faces[i].x << "/" << faces[i].y << "/" << faces[i].z << " ";
         cout << faces[i+1].x << "/" << faces[i+1].y << "/" << faces[i+1].z << " ";
@@ -102,11 +103,11 @@ void Scene::print() const
 void Scene::calculateNormal()
 {
     vector<int> vcount(vertices.size(), 0);
-    for (int i = 0; i < faces.size(); i += 3) {
+    for (unsigned long i = 0; i < faces.size(); i += 3) {
         // get the 3 indices
-        int k1 = faces[i].x - 1;
-        int k2 = faces[i+1].x - 1;
-        int k3 = faces[i+2].x - 1;
+        int k1 = ROUND(faces[i].x) - 1;
+        int k2 = ROUND(faces[i+1].x) - 1;
+        int k3 = ROUND(faces[i+2].x) - 1;
 
         // get the 3 vertices of the of face
         Vec3 v1 = vertices[k1].p;
@@ -124,7 +125,7 @@ void Scene::calculateNormal()
 
         vcount[k1]++; vcount[k2]++; vcount[k3]++;
 
-        for (int i = 0; i < vertices.size(); i++) {
+        for (unsigned long i = 0; i < vertices.size(); i++) {
             vertices[i].n = (vertices[i].n / vcount[i]).normalize();
         }
     }

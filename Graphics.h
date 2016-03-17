@@ -2,6 +2,7 @@
 #define GRAPHICS_H
 #include "Math.h"
 #include <vector>
+#include "Scene.h"
 
 class Window {
 public:
@@ -22,6 +23,8 @@ public:
 
     void stLine(Vec2 p1, Vec2 p2, Vec3 c={1,1,1});
     void gnLine(Vec2 p1, Vec2 p2, Vec3 c={1,1,1});
+    void wireframe(Scene scene, Vec3 camera={0,0,5}, Vec3 target={0,0,0},
+            float angle_x=50, float angle=0);
 };
 
 #endif // GRAPHICS

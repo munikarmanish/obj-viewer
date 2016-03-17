@@ -1,4 +1,5 @@
 #include "Transformation.h"
+#include <cassert>
 using namespace std;
 
 Vec3 translate(Vec3 p, float tx, float ty, float tz)
@@ -48,38 +49,45 @@ Vec3 rotate(Vec3 p, float angle, Vec3 axis)
 Vec2 world_to_pixel(Vec3 p, Vec3 cam, Vec3 target,
         float win_width, float win_height, float angle_x)
 {
-    Mat W2V(4,4), T(4,4), R(4,4), P(4,1);
+    // calculate u, v, n vectors
+    Vec3 n = (cam - target).normalize();
+    Vec3 u = cross(Vec3(0,1,0), n).normalize();
+    Vec3 v = cross(n, u).normalize();
 
-    // calculate U,V,N vectors
-    Vec3 N = (cam - target).normalize();
-    Vec3 V(0,1,0);
-    Vec3 U = cross(V,N).normalize();
+    /*
+    // DEBUG
+    cout << "u = " << u << endl;
+    cout << "v = " << v << endl;
+    cout << "n = " << n << endl;
+    cout << "u.v = " << dot(u,v) << endl;
+    cout << "v.n = " << dot(v,n) << endl;
+    cout << "n.u = " << dot(n,u) << endl;
+    */
 
-    // construct transformation matrix
-    T.set({1, 0, 0, -cam.x,
-           0, 1, 0, -cam.y,
-           0, 0, 1, -cam.z,
+    // translate cam to origin
+    p = translate(p, -cam.x, -cam.y, -cam.z);
+    //cout << "Translated point = " << p << endl; // DEBUG
+
+    // rotate to align the axes
+    Mat R(4,4);
+    R.set({u.x, u.y, u.z, 0,
+           v.x, v.y, v.z, 0,
+           n.x, n.y, n.z, 0,
            0, 0, 0, 1});
-    R.set({U.x, U.y, U.z, 0,
-           V.x, V.y, V.z, 0,
-           N.x, N.y, N.z, 0,
-           0, 0, 0, 1});
-    W2V = R*T;
-
-    // construct point matrix
-    P.set({p.x, p.y, p.z, 1});
-
-    // perform transformation
-    P = W2V * P;
-    p = Vec3(P(0), P(1), P(2)); // now p is in viewing coordinates
+    //cout << "R = " << R << endl; // DEBUG
+    Mat P(4,1); P.set({p.x, p.y, p.z, 1});
+    //cout << "P = " << P << endl; // DEBUG;
+    P = R * P;
+    //cout << "RP = " << P << endl; // DEBUG
+    p = {P(0), P(1), P(2)};
 
     // change to screen coordinates
-    float aspect_ratio = (float) win_width / win_height;
+    float aspect_ratio = static_cast<float>(win_width) / win_height;
     angle_x = deg2rad(angle_x);
     float angle_y = atan(tan(angle_x) / aspect_ratio);
 
-    p.x = (1 + p.x/fabs(p.z * tan(angle_x/2))) * (win_width/2);
-    p.y = (1 + p.y/fabs(p.z * tan(angle_y/2))) * (win_height/2);
+    p.x = (1 + p.x/fabs(p.z*tan(angle_x/2))) * (win_width/2);
+    p.y = (1 + p.y/fabs(p.z*tan(angle_y/2))) * (win_height/2);
 
     return Vec2(p.x, p.y, p.z);
 }
