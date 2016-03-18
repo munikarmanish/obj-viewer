@@ -20,25 +20,28 @@ public: // operators
     friend Vec3 operator-(Vec3 u, Vec3 v) { return Vec3(u.x-v.x, u.y-v.y, u.z-v.z); }
     friend Vec3 operator*(Vec3 u, float d) { return Vec3(u.x*d, u.y*d, u.z*d); }
     friend Vec3 operator*(float d, Vec3 u) { return u*d; }
-    friend Vec3 operator/(Vec3 u, float d) { return Vec3(u.x/d, u.y/d, u.z/d); }
-    float& operator[](int i) { return (&x)[i]; }
+    friend Vec3 operator/(Vec3 u, float d);
+    float& operator[](int i);
 
 public: // operations
     friend float dot(Vec3 u, Vec3 v) { return u.x*v.x + u.y*v.y + u.z*v.z; }
     friend Vec3 cross(Vec3 u, Vec3 v) { return
         Vec3(u.y*v.z - u.z*v.y, u.z*v.x - u.x*v.z, u.x*v.y - u.y*v.x); }
     float norm() const { return x*x + y*y + z*z; }
-    float mag() const { return sqrt(norm()); }
+    float mag() const { return sqrt(fabs(norm())); }
     Vec3 normalize() const { return (*this)/mag(); }
 };
 
-class Vec2 : public Vec3 {
+class Vec2 {
 public: // data
-    Vec3 c; // color
+    float x, y, z;
     float i; // intensity
+    Vec3 c; // color
 
 public: // constructors
-    Vec2(float x=0, float y=0, float z=0, float i=1): Vec3(x,y,z),i(i) {}
+    Vec2(float x=0, float y=0, float z=0, float i=1): x(x), y(y), z(z) ,i(i), c(1,1,1) {}
+
+    friend std::ostream& operator<<(std::ostream& o, Vec2 v);
 };
 
 class Mat {

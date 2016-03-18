@@ -1,6 +1,6 @@
 CC := g++
 LIBS := gl glu freeglut
-CFLAGS := --std=c++14 `pkg-config --cflags $(LIBS)`
+CFLAGS := --std=c++14 -g `pkg-config --cflags $(LIBS)`
 LFLAGS := `pkg-config --libs $(LIBS)`
 
 FILES := Math Transformation Scene Graphics

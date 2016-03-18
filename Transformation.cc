@@ -1,10 +1,22 @@
 #include "Transformation.h"
 #include <cassert>
+#include <cmath>
 using namespace std;
 
 Vec3 translate(Vec3 p, float tx, float ty, float tz)
 {
     return Vec3(p.x + tx, p.y + ty, p.z + tz);
+}
+
+Vec3 rotate_y(Vec3 p, float angle)
+{
+    angle = deg2rad(angle);
+
+    float x = p.x*cos(angle) + p.z*sin(angle);
+    float y = p.y;
+    float z = -p.x*sin(angle) + p.z*cos(angle);
+
+    return Vec3(x,y,z);
 }
 
 Vec3 rotate(Vec3 p, float angle, Vec3 axis)
@@ -46,6 +58,20 @@ Vec3 rotate(Vec3 p, float angle, Vec3 axis)
     return Vec3(P(0), P(1), P(2));
 }
 
+Vec2 project(Vec3 p, float width, float height, float angle_x)
+{
+    float angle_y, aspect_ratio;
+    aspect_ratio = width / height;
+    angle_x = deg2rad(angle_x);
+    angle_y = 2*atan(tan(angle_x/2) / aspect_ratio);
+
+    Vec2 v;
+    v.x = (1 + p.x/fabs(p.z*tan(angle_x/2))) * (width/2);
+    v.y = (1 + p.y/fabs(p.z*tan(angle_y/2))) * (height/2);
+    v.z = p.z;
+    return v;
+}
+
 Vec2 world_to_pixel(Vec3 p, Vec3 cam, Vec3 target,
         float win_width, float win_height, float angle_x)
 {
@@ -53,16 +79,6 @@ Vec2 world_to_pixel(Vec3 p, Vec3 cam, Vec3 target,
     Vec3 n = (cam - target).normalize();
     Vec3 u = cross(Vec3(0,1,0), n).normalize();
     Vec3 v = cross(n, u).normalize();
-
-    /*
-    // DEBUG
-    cout << "u = " << u << endl;
-    cout << "v = " << v << endl;
-    cout << "n = " << n << endl;
-    cout << "u.v = " << dot(u,v) << endl;
-    cout << "v.n = " << dot(v,n) << endl;
-    cout << "n.u = " << dot(n,u) << endl;
-    */
 
     // translate cam to origin
     p = translate(p, -cam.x, -cam.y, -cam.z);
@@ -74,11 +90,8 @@ Vec2 world_to_pixel(Vec3 p, Vec3 cam, Vec3 target,
            v.x, v.y, v.z, 0,
            n.x, n.y, n.z, 0,
            0, 0, 0, 1});
-    //cout << "R = " << R << endl; // DEBUG
     Mat P(4,1); P.set({p.x, p.y, p.z, 1});
-    //cout << "P = " << P << endl; // DEBUG;
     P = R * P;
-    //cout << "RP = " << P << endl; // DEBUG
     p = {P(0), P(1), P(2)};
 
     // change to screen coordinates

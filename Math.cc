@@ -13,6 +13,33 @@ ostream& operator<<(ostream& o, Vec3 v)
     return o << "(" << v.x << ", " << v.y << ", " << v.z << ")";
 }
 
+Vec3 operator/(Vec3 u, float d)
+{
+    /*
+     * This is to prevent causing NaN when normalizing zero vectors
+     */
+    if (d == 0)
+        d = 0.00001;
+    return Vec3(u.x/d, u.y/d, u.z/d);
+}
+
+float& Vec3::operator[](int i)
+{
+    if (i == 0)
+        return x;
+    else if (i == 1)
+        return y;
+    else if (i == 2)
+        return z;
+    else
+        throw range_error("index out of range in Vec3::operator[]");
+}
+
+ostream& operator<<(ostream& o, Vec2 v)
+{
+    return o << "(" << v.x << ", " << v.y << ", " << v.z << ")";
+}
+
 Mat& Mat::set(std::initializer_list<float> _data)
 {
     if (_data.size() != data.size())
