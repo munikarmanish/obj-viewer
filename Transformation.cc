@@ -94,13 +94,5 @@ Vec2 world_to_pixel(Vec3 p, Vec3 cam, Vec3 target,
     P = R * P;
     p = {P(0), P(1), P(2)};
 
-    // change to screen coordinates
-    float aspect_ratio = static_cast<float>(win_width) / win_height;
-    angle_x = deg2rad(angle_x);
-    float angle_y = atan(tan(angle_x) / aspect_ratio);
-
-    p.x = (1 + p.x/fabs(p.z*tan(angle_x/2))) * (win_width/2);
-    p.y = (1 + p.y/fabs(p.z*tan(angle_y/2))) * (win_height/2);
-
-    return Vec2(p.x, p.y, p.z);
+    return project(p, win_width, win_height, angle_x);
 }

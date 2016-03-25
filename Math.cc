@@ -2,45 +2,38 @@
 #include <stdexcept>
 using namespace std;
 
-Vec3::Vec3(initializer_list<float> data)
+Vec3::Vec3(const initializer_list<float>& data)
 {
     vector<float> v = data;
     x = v[0]; y = v[1]; z = v[2];
 }
 
-ostream& operator<<(ostream& o, Vec3 v)
+ostream& operator<<(ostream& o, const Vec3& v)
 {
     return o << "(" << v.x << ", " << v.y << ", " << v.z << ")";
 }
 
-Vec3 operator/(Vec3 u, float d)
+Vec3 operator/(const Vec3& u, float d)
 {
-    /*
-     * This is to prevent causing NaN when normalizing zero vectors
-     */
-    if (d == 0)
-        d = 0.00001;
+    //This is to prevent causing NaN when normalizing zero vectors
+    if (d == 0) d = 0.00001;
     return Vec3(u.x/d, u.y/d, u.z/d);
 }
 
 float& Vec3::operator[](int i)
 {
-    if (i == 0)
-        return x;
-    else if (i == 1)
-        return y;
-    else if (i == 2)
-        return z;
-    else
-        throw range_error("index out of range in Vec3::operator[]");
+    if (i == 0) return x;
+    else if (i == 1) return y;
+    else if (i == 2) return z;
+    else throw range_error("index out of range in Vec3::operator[]");
 }
 
-ostream& operator<<(ostream& o, Vec2 v)
+ostream& operator<<(ostream& o, const Vec2& v)
 {
     return o << "(" << v.x << ", " << v.y << ", " << v.z << ")";
 }
 
-Mat& Mat::set(std::initializer_list<float> _data)
+Mat& Mat::set(const std::initializer_list<float>& _data)
 {
     if (_data.size() != data.size())
         throw std::length_error("invalid size of initializer_list to assign matrix");
@@ -48,7 +41,7 @@ Mat& Mat::set(std::initializer_list<float> _data)
     return *this;
 }
 
-ostream& operator<<(ostream& o, Mat A)
+ostream& operator<<(ostream& o, const Mat& A)
 {
     o << "[";
     for (int i = 0; i < A.row; i++) {
@@ -61,7 +54,7 @@ ostream& operator<<(ostream& o, Mat A)
     return o << "]";
 }
 
-Mat operator+(Mat A, Mat B)
+Mat operator+(const Mat& A, const Mat& B)
 {
     Mat R = A;
     for (unsigned long i = 0; i < R.data.size(); i++)
@@ -69,7 +62,7 @@ Mat operator+(Mat A, Mat B)
     return R;
 }
 
-Mat operator-(Mat A, Mat B)
+Mat operator-(const Mat& A, const Mat& B)
 {
     Mat R = A;
     for (unsigned long i = 0; i < R.data.size(); i++)
@@ -77,9 +70,10 @@ Mat operator-(Mat A, Mat B)
     return R;
 }
 
-Mat operator*(Mat A, Mat B)
+Mat operator*(const Mat& A, const Mat& B)
 {
-    if (A.col != B.row) throw std::invalid_argument("invalid sized matrices to multiply");
+    if (A.col != B.row)
+        throw std::invalid_argument("invalid sized matrices to multiply");
 
     Mat R(A.row, B.col, 0);
     for (int i = 0; i < R.row; i++)
@@ -91,7 +85,7 @@ Mat operator*(Mat A, Mat B)
     return R;
 }
 
-Mat operator*(Mat A, float d)
+Mat operator*(const Mat& A, float d)
 {
     Mat R = A;
     for (unsigned long i = 0; i < R.data.size(); i++)
@@ -99,7 +93,7 @@ Mat operator*(Mat A, float d)
     return R;
 }
 
-Mat operator/(Mat A, float d)
+Mat operator/(const Mat& A, float d)
 {
     if (d == 0) throw runtime_error("division of matrix by zero");
 
@@ -117,7 +111,7 @@ float Mat::mag() const
     return sqrt(sum);
 }
 
-float dot(Mat A, Mat B)
+float dot(const Mat& A, const Mat& B)
 {
     if (A.row != B.row or A.col != B.col)
         throw invalid_argument("invalid sized matrices to dot product");

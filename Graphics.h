@@ -3,6 +3,7 @@
 #include "Math.h"
 #include <vector>
 #include "Scene.h"
+#include "main.h"
 
 class Window {
 public:
@@ -18,23 +19,18 @@ public:
     void refresh();
     void start();
 
-    void setPixel(Vec2 p, Vec3 c={1,1,1}, float i=1);
-    void setPixel(int x, int y, float d, Vec3 c={1,1,1}, float i=1);
+    void setPixel(const Vec2& p, const Vec3& c={1,1,1}, float i=1);
+    void setPixel(int x, int y, float d, const Vec3& c={1,1,1}, float i=1);
 
-    void stLine(Vec2 p1, Vec2 p2, Vec3 c={1,1,1});
-    void gnLine(Vec2 p1, Vec2 p2, Vec3 c={1,1,1});
+    void drawLine(const Vec2& p1, const Vec2& p2, const Vec3& c={1,1,1});
 
-    void fillTriangle(Vec2, Vec2, Vec2);
-    void fillTriangleFlat(Vec2, Vec2, Vec2, float i);
+    void fillTriangle(const Vec2&, const Vec2&, const Vec2&);
 
-    void wireframe(const Scene& scene, Vec3 camera={0,0,10}, Vec3 target={0,0,0},
-            float angle_x=50, float angle=0);
-    void render(const Scene& scene, Vec3 camera={0,0,10}, Vec3 target={0,0,0},
-            Vec3 light={10,10,10}, float angle_x=45, float angle=0);
-    void renderFlat(const Scene& scene, Vec3 camera={0,0,10}, Vec3 target={0,0,0},
-            Vec3 light={10,10,10}, float angle_x=45, float angle=0);
-
-    void drawSpan(Edge& e1, Edge& e2);
+    void wireframe(const Scene& scene, const Vec3& camera={0,0,10},
+            const Vec3& target={0,0,0}, float angle_x=50, float angle=0);
+    void render(const Scene& scene, const Vec3& camera={0,0,10},
+            const Vec3& target={0,0,0}, const Vec3& light={10,10,10},
+            float angle_x=45, float angle=0);
 };
 
 #endif // GRAPHICS_H

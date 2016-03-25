@@ -1,5 +1,6 @@
 #include "Graphics.h"
 #include <GL/glut.h>
+#include <cassert>
 using namespace std;
 
 Window::Window(int w, int h, float nearz, float farz):
@@ -25,13 +26,14 @@ void Window::start()
     glutMainLoop();
 }
 
-void Window::setPixel(Vec2 p, Vec3 c, float i)
+void Window::setPixel(const Vec2& p, const Vec3& c, float i)
 {
     setPixel(ROUND(p.x), ROUND(p.y), p.z, c, i);
 }
 
-void Window::setPixel(int x, int y, float z, Vec3 c, float i)
+void Window::setPixel(int x, int y, float z, const Vec3& c, float i)
 {
+    // clipping
     if (x < 0 or x > width or y < 0 or y > height)
         return;
 
@@ -46,21 +48,28 @@ void Window::setPixel(int x, int y, float z, Vec3 c, float i)
     glEnd();
 }
 
-void Window::gnLine(Vec2 p1, Vec2 p2, Vec3 c)
+void Window::drawLine(const Vec2& p1, const Vec2& p2, const Vec3& c)
 {
-    float x1 = p1.x, y1 = p1.y;
-    float x2 = p2.x, y2 = p2.y;
-
+#ifdef SOLID
+    int del_x = ROUND(p2.x) - ROUND(p1.x);
+    int del_y = ROUND(p2.y) - ROUND(p1.y);
+#else
+    float del_x = p2.x - p1.x;
+    float del_y = p2.y - p1.y;
+#endif
     float d = p1.z, del_d = p2.z - p1.z;
     float i = p1.i, del_i = p2.i - p1.i;
-
-    float del_x = x2 - x1;
-    float del_y = y2 - y1;
     int step = (abs(del_x) > abs(del_y))? abs(del_x) : abs(del_y);
 
-    float x = x1, y = y1;
+    float x = p1.x, y = p1.y;
+    if (step == 0) {
+        setPixel(ROUND(x), ROUND(y), d, c, i);
+        return;
+    }
+
     for (int k = 0; k <= step; k++) {
         setPixel(ROUND(x), ROUND(y), d, c, i);
+        //setPixel(x, y, d, c, i);
 
         x += del_x / step;
         y += del_y / step;
@@ -69,10 +78,11 @@ void Window::gnLine(Vec2 p1, Vec2 p2, Vec3 c)
     }
 }
 
-void Window::fillTriangle(Vec2 v1, Vec2 v2, Vec2 v3)
+void Window::fillTriangle(const Vec2& v1, const Vec2& v2, const Vec2& v3)
 {
     // vec2 comparer
-    struct Vec2Comparer{ bool operator()(Vec2 a, Vec2 b) { return a.y < b.y; } };
+    struct Vec2Comparer{ bool operator()(const Vec2& a, const Vec2& b) {
+        return a.y < b.y; }};
     vector<Vec2> v = {v1, v2, v3};
     sort(v.begin(), v.end(), Vec2Comparer());
 
@@ -85,7 +95,7 @@ void Window::fillTriangle(Vec2 v1, Vec2 v2, Vec2 v3)
         x2 = v[0].x + (y - v[0].y) * (v[2].x - v[0].x) / (v[2].y - v[0].y);
         z2 = v[0].z + (y - v[0].y) * (v[2].z - v[0].z) / (v[2].y - v[0].y);
         i2 = v[0].i + (y - v[0].y) * (v[2].i - v[0].i) / (v[2].y - v[0].y);
-        gnLine(Vec2(x1,y,z1,i1), Vec2(x2,y,z2,i2), {1,1,0});
+        drawLine(Vec2(x1,y,z1,i1), Vec2(x2,y,z2,i2), {1,1,0});
     }
 
     for (y = v[1].y; y <= v[2].y; y++) {
@@ -96,66 +106,13 @@ void Window::fillTriangle(Vec2 v1, Vec2 v2, Vec2 v3)
         x2 = v[0].x + (y - v[0].y) * (v[2].x - v[0].x) / (v[2].y - v[0].y);
         z2 = v[0].z + (y - v[0].y) * (v[2].z - v[0].z) / (v[2].y - v[0].y);
         i2 = v[0].i + (y - v[0].y) * (v[2].i - v[0].i) / (v[2].y - v[0].y);
-        gnLine(Vec2(x1,y,z1,i1), Vec2(x2,y,z2,i2), {1,1,0});
-    }
-
-    /*
-    float delx, dely, delz, deli, step, x, y, z, i, dx, dy, dz, di;
-    delx = v[2].x - v[1].x;
-    dely = v[2].y - v[1].y;
-    delz = v[2].z - v[1].z;
-    deli = v[2].i - v[1].i;
-    step = std::max(fabs(delx), fabs(dely));
-    dx = delx / step;
-    dy = dely / step;
-    dz = delz / step;
-    di = deli / step;
-    x = v[1].x;
-    y = v[1].y;
-    z = v[1].z;
-    i = v[1].i;
-    for (int k = 0; k <= step; k++) {
-        gnLine(v[0], Vec2(x,y,z,i));
-        x += dx;
-        y += dy;
-        z += dz;
-        i += di;
-    }
-    */
-}
-
-void Window::fillTriangleFlat(Vec2 v1, Vec2 v2, Vec2 v3, float i)
-{
-    // vec2 comparer
-    struct Vec2Comparer{ bool operator()(Vec2 a, Vec2 b) { return a.y < b.y; } };
-    vector<Vec2> v = {v1, v2, v3};
-    sort(v.begin(), v.end(), Vec2Comparer());
-
-    float y, x1, z1, x2, z2;
-    for (y = v[0].y; y < v[1].y; y++) {
-        if (v[1].y == v[0].y) break;
-        x1 = v[0].x + (y - v[0].y) * (v[1].x - v[0].x) / (v[1].y - v[0].y);
-        z1 = v[0].z + (y - v[0].y) * (v[1].z - v[0].z) / (v[1].y - v[0].y);
-        x2 = v[0].x + (y - v[0].y) * (v[2].x - v[0].x) / (v[2].y - v[0].y);
-        z2 = v[0].z + (y - v[0].y) * (v[2].z - v[0].z) / (v[2].y - v[0].y);
-        gnLine(Vec2(x1,y,z1,i), Vec2(x2,y,z2,i), {1,1,0});
-    }
-
-    for (y = v[1].y; y <= v[2].y; y++) {
-        if (v[2].y == v[1].y) break;
-        x1 = v[1].x + (y - v[1].y) * (v[2].x - v[1].x) / (v[2].y - v[1].y);
-        z1 = v[1].z + (y - v[1].y) * (v[2].z - v[1].z) / (v[2].y - v[1].y);
-        x2 = v[0].x + (y - v[0].y) * (v[2].x - v[0].x) / (v[2].y - v[0].y);
-        z2 = v[0].z + (y - v[0].y) * (v[2].z - v[0].z) / (v[2].y - v[0].y);
-        gnLine(Vec2(x1,y,z1,i), Vec2(x2,y,z2,i), {1,1,0});
+        drawLine(Vec2(x1,y,z1,i1), Vec2(x2,y,z2,i2), {1,1,0});
     }
 }
 
-void Window::wireframe(const Scene& scene, Vec3 camera, Vec3 target, float angle_x, float angle)
+void Window::wireframe(const Scene& scene, const Vec3& camera,
+        const Vec3& target, float angle_x, float angle)
 {
-    // debug
-    //cout << camera << " ==> " << target << endl;
-
     // project points to 2d
     vector<Vec2> vertices2d;
     for (unsigned long i = 0; i < scene.vertices.size(); i++) {
@@ -174,24 +131,21 @@ void Window::wireframe(const Scene& scene, Vec3 camera, Vec3 target, float angle
         int index1 = scene.faces[i];
         int index2 = scene.faces[i+1];
         int index3 = scene.faces[i+2];
-
         // get the vertices
         Vec2 p1 = vertices2d[index1];
         Vec2 p2 = vertices2d[index2];
         Vec2 p3 = vertices2d[index3];
-
         // draw
-        gnLine(p1, p2);
-        gnLine(p2, p3);
-        gnLine(p3, p1);
+        drawLine(p1, p2);
+        drawLine(p2, p3);
+        drawLine(p3, p1);
     }
 }
 
-void Window::render(const Scene& scene, Vec3 camera, Vec3 target, Vec3 light,
-        float angle_x, float angle)
+void Window::render(const Scene& scene, const Vec3& camera, const Vec3& target,
+        const Vec3& light, float angle_x, float angle)
 {
     vector<Vec2> vertices2d(scene.vertices.size());
-    vector<Vec3> vertices3d(scene.vertices.size());
     
     // project to 2d as well as find the intensities
     Vec3 point3d, u, v, n, L, N, R, H, V; Mat M(4,4), P(4,1); float d;
@@ -218,23 +172,18 @@ void Window::render(const Scene& scene, Vec3 camera, Vec3 target, Vec3 light,
         P = M*P;
         point3d = {P(0), P(1), P(2)}; // this is in camera coordinates
 
+        // calculate point intensity
+        N = scene.normals[i].normalize();
+        L = (light - point3d).normalize();
+        d = (light - point3d).mag();
+        R = (2*dot(N,L)*N - L).normalize();
+        V = (camera - point3d).normalize();
+        //H = (L + V).normalize();
+        float intensity = 0.2 + 0.7*dot(N,L) + powf(dot(R,V), 50);
+        if (intensity > 1) intensity = 1;
+
         // project to screen coordinates
         vertices2d[i] = project(point3d, width, height, angle_x);
-        vertices3d[i] = point3d;
-    }
-
-    // calculate intensities
-    for (unsigned long i = 0; i < vertices3d.size(); i++) {
-        // calculate surface intensity
-        N = scene.normals[i].normalize();
-        L = (light - vertices3d[i]);
-        d = L.mag();
-        L = L.normalize();
-        R = 2*dot(N,L)*N;
-        V = (Vec3(0,0,0) - vertices3d[i]).normalize();
-        H = (L + V).normalize();
-        float intensity = 0.1 + 200*dot(N,L)/(d*d) + powf(dot(N,H), 256);
-        if (intensity > 1) intensity = 1;
         vertices2d[i].i = intensity;
     }
 
@@ -248,71 +197,5 @@ void Window::render(const Scene& scene, Vec3 camera, Vec3 target, Vec3 light,
 
         // fill triangle
         fillTriangle(v1, v2, v3);
-    }
-}
-
-void Window::renderFlat(const Scene& scene, Vec3 camera, Vec3 target, Vec3 light,
-        float angle_x, float angle)
-{
-    vector<Vec2> vertices2d(scene.vertices.size());
-    vector<Vec3> vertices3d(scene.vertices.size());
-    
-    // project to 2d as well as find the intensities
-    Vec3 point3d, u, v, n, L, N; Mat M(4,4), P(4,1);
-    for (unsigned long i = 0; i < scene.vertices.size(); i++) {
-        point3d = scene.vertices[i];
-
-        // rotate the point in world axis
-        point3d = rotate_y(point3d, angle);
-
-        // translate camera to origin
-        point3d = translate(point3d, -camera.x, -camera.y, -camera.z);
-
-        // calculate u,v,n vectors
-        n = (camera - target).normalize();
-        u = cross({0,1,0}, n).normalize();
-        v = cross(n, u).normalize();
-
-        // align camera axes to world axes
-        M.set({u.x, u.y, u.z, 0,
-               v.x, v.y, v.z, 0,
-               n.x, n.y, n.z, 0,
-               0, 0, 0, 1});
-        P.set({point3d.x, point3d.y, point3d.z, 1});
-        P = M*P;
-        point3d = {P(0), P(1), P(2)}; // this is in camera coordinates
-
-        // project to screen coordinates
-        vertices2d[i] = project(point3d, width, height, angle_x);
-        vertices3d[i] = point3d;
-    }
-
-    Vec3 R, V, H; float d;
-    for (unsigned long i = 0; i < scene.faces.size(); i += 3) {
-        // calculate surface normal
-        Vec3 v1 = vertices3d[scene.faces[i]];
-        Vec3 v2 = vertices3d[scene.faces[i+1]];
-        Vec3 v3 = scene.vertices[scene.faces[i+2]];
-        Vec3 A = (v2 - v1).normalize();
-        Vec3 B = (v3 - v2).normalize();
-        Vec3 N = cross(A,B).normalize();
-
-        // calculate surface intensity
-        Vec3 centroid = (v1 + v2 + v3)/3;
-        Vec3 L = (light - centroid);
-        d = L.mag();
-        L = L.normalize();
-        R = 2*dot(N,L)*N;
-        V = (Vec3(0,0,0) - centroid).normalize();
-        H = (L + V).normalize();
-        float intensity = 0.1 + 200*dot(N,L)/(d*d) + powf(dot(N,H), 256);
-        if (intensity > 1) intensity = 1;
-
-        // get 2d vertices
-        Vec2 p1 = vertices2d[scene.faces[i]];
-        Vec2 p2 = vertices2d[scene.faces[i+1]];
-        Vec2 p3 = vertices2d[scene.faces[i+2]];
-
-        fillTriangleFlat(p1, p2, p3, intensity);
     }
 }

@@ -3,24 +3,24 @@
 #include <GL/glut.h>
 #include "Scene.h"
 #include "Graphics.h"
+#include "Transformation.h"
+#include "main.h"
 using namespace std;
 
+
 // global variables
-Vec3 CAMERA(0,3,7), TARGET(0,0,0), LIGHT(10,10,10);
+Vec3 CAMERA(0,0,20), TARGET(0,0,0), LIGHT(10,10,10);
 Scene SCENE;
 float FIELD_OF_VIEW = 45, ANGLE = 0;
 Window WINDOW;
 
 void display();
-void reshape(int w, int h);
 void keyboard(unsigned char key, int x, int y);
 void special(int key, int x, int y);
 
 int main(int argc, char** argv)
 {
     SCENE.load(string(argv[1]));
-    //SCENE.print();
-    
     WINDOW = Window(800, 600, -1, -200);
 
     // initialize GL
@@ -35,8 +35,6 @@ int main(int argc, char** argv)
     gluOrtho2D(0, WINDOW.width, 0, WINDOW.height);
 
     glutDisplayFunc(display);
-    //glutIdleFunc(display);
-    //glutReshapeFunc(reshape);
     glutKeyboardFunc(keyboard);
     glutSpecialFunc(special);
     
@@ -45,12 +43,12 @@ int main(int argc, char** argv)
 
 void display()
 {
-    //cout << "Camera = " << CAMERA << ", Target = " << TARGET << ", Light = " << LIGHT << endl;
     WINDOW.clear();
-    //WINDOW.wireframe(SCENE, CAMERA, TARGET, FIELD_OF_VIEW, ANGLE);
+#ifdef SOLID
     WINDOW.render(SCENE, CAMERA, TARGET, LIGHT, FIELD_OF_VIEW, ANGLE);
-    //WINDOW.renderFlat(SCENE, CAMERA, TARGET, LIGHT, FIELD_OF_VIEW, ANGLE);
-    //WINDOW.fillTriangle(Vec2(200,200,-5), Vec2(500,100,-20, 0.5), Vec2(600,400,-5, 0.1));
+#else
+    WINDOW.wireframe(SCENE, CAMERA, TARGET, FIELD_OF_VIEW, ANGLE);
+#endif
     WINDOW.refresh();
 }
 
@@ -90,14 +88,4 @@ void special(int key, int x, int y)
         ANGLE += 5;
 
     glutPostRedisplay();
-}
-
-void reshape(int w, int h)
-{
-    WINDOW.width = w;
-    WINDOW.height = h;
-
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    gluOrtho2D(0, WINDOW.width, 0, WINDOW.height);
 }
